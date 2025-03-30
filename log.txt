@@ -1,0 +1,10 @@
+clear
+ls
+clear
+exit
+clear
+ls
+nano a.out
+clear
+mqak[2~[2~[3~exit
+exit
