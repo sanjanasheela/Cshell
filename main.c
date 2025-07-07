@@ -5,10 +5,10 @@
 #include "seek.h"
 #include "reveal.h"
 #include "proclore.h"
-#include <signal.h>
 #include "syscom.h"
 #include "aliases.h"
 #include <unistd.h>
+#include <signal.h>
 extern BgProcess bg_processes[MAX_BG_PROCS];
 extern int bg_count;
 char b_dir[MAX_PATH_LENGTH];
@@ -70,7 +70,7 @@ int main()
         {
             continue;
         }
-        store(input);
+        store(input); 
         char *s = aliase(input);
         if (s == NULL)
         {

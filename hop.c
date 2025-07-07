@@ -1,60 +1,57 @@
 #include "display.h"
 #include "hop.h"
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
 char prev_path[MAX_PATH_LENGTH] = "";
 #define COLOR_RESET "\033[0m"
 #define COLOR_RED "\033[31m"
+
 extern char b_dir[MAX_PATH_LENGTH];
 
-void print_current_directory()
-{
+void print_current_directory() {
     char cwd[MAX_PATH_LENGTH];
-    if (getcwd(cwd, sizeof(cwd)) != NULL)
-    {
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
         printf("%s\n", cwd);
-    }
-    else
-    {
-        perror(COLOR_RED"getcwd() error"COLOR_RESET);
+    } else {
+        perror(COLOR_RED "getcwd() error" COLOR_RESET);
     }
 }
 
-void hop_to_directory(const char *path, char *prev_path, const char *home_directory)
-{
+void resolve_path(const char *path, char *out_path, const char *home_directory, const char *prev_path) {
+    if (path[0] == '~') {
+        snprintf(out_path, MAX_PATH_LENGTH, "%s%s", home_directory, path + 1);
+    } else if (strcmp(path, "-") == 0) {
+        if (strlen(prev_path) == 0) {
+            out_path[0] = '\0';
+        } else {
+            snprintf(out_path, MAX_PATH_LENGTH, "%s", prev_path);
+        }
+    } else {
+        snprintf(out_path, MAX_PATH_LENGTH, "%s", path);
+    }
+}
+
+void hop_to_directory(const char *path, char *prev_path, const char *home_directory) {
     char new_path[MAX_PATH_LENGTH];
-    char resolved_path[MAX_PATH_LENGTH];
-    if (path[0] == '~')
-    {
-        snprintf(new_path, sizeof(new_path), "%s%s", home_directory, path + 1);
+
+    resolve_path(path, new_path, home_directory, prev_path);
+
+    if (strlen(new_path) == 0) {
+        printf("no previous directory\n");
+        return;
     }
-    else if (strcmp(path, "-") == 0)
-    {
-        if (strlen(prev_path) == 0)
-        {
-            printf("no previous directory\n");
-            return;
-        }
-        snprintf(new_path, sizeof(new_path), "%s", prev_path);
+
+    if (getcwd(prev_path, MAX_PATH_LENGTH) == NULL) {
+        perror("getcwd() error");
+        return;
     }
-    else
-    {
-        snprintf(new_path, sizeof(new_path), "%s", path);
+
+    if (chdir(new_path) != 0) {
+        perror("chdir() error");
+        return;
     }
-    if (realpath(new_path, resolved_path) != NULL)
-    {
-        if (getcwd(prev_path, MAX_PATH_LENGTH) == NULL)
-        {
-            perror("getcwd() error");
-            return;
-        }
-        if (chdir(resolved_path) != 0)
-        {
-            perror("chdir() error");
-            return;
-        }
-        print_current_directory();
-    }
-    else
-    {
-        perror("realpath() error");
-    }
+
+    print_current_directory();
 }
