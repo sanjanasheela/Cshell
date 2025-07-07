@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 char prev_path[MAX_PATH_LENGTH] = "";
 #define COLOR_RESET "\033[0m"
@@ -19,27 +20,33 @@ void print_current_directory() {
     }
 }
 
-void resolve_path(const char *path, char *out_path, const char *home_directory, const char *prev_path) {
+int build_resolved_path(const char *path, char *resolved_path, const char *home_directory, const char *prev_path) {
+    char new_path[MAX_PATH_LENGTH];
+
     if (path[0] == '~') {
-        snprintf(out_path, MAX_PATH_LENGTH, "%s%s", home_directory, path + 1);
+        snprintf(new_path, sizeof(new_path), "%s%s", home_directory, path + 1);
     } else if (strcmp(path, "-") == 0) {
         if (strlen(prev_path) == 0) {
-            out_path[0] = '\0';
-        } else {
-            snprintf(out_path, MAX_PATH_LENGTH, "%s", prev_path);
+            printf("no previous directory\n");
+            return 0;
         }
+        snprintf(new_path, sizeof(new_path), "%s", prev_path);
     } else {
-        snprintf(out_path, MAX_PATH_LENGTH, "%s", path);
+        snprintf(new_path, sizeof(new_path), "%s", path);
     }
+
+    if (realpath(new_path, resolved_path) == NULL) {
+        perror("realpath() error");
+        return 0;
+    }
+
+    return 1;
 }
 
 void hop_to_directory(const char *path, char *prev_path, const char *home_directory) {
-    char new_path[MAX_PATH_LENGTH];
+    char resolved_path[MAX_PATH_LENGTH];
 
-    resolve_path(path, new_path, home_directory, prev_path);
-
-    if (strlen(new_path) == 0) {
-        printf("no previous directory\n");
+    if (!build_resolved_path(path, resolved_path, home_directory, prev_path)) {
         return;
     }
 
@@ -48,7 +55,7 @@ void hop_to_directory(const char *path, char *prev_path, const char *home_direct
         return;
     }
 
-    if (chdir(new_path) != 0) {
+    if (chdir(resolved_path) != 0) {
         perror("chdir() error");
         return;
     }

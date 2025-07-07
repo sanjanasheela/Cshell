@@ -103,6 +103,7 @@ char *trimspace(char *str)
 
 void execute_command(char *argv[maxcommandlength], int i)
 {
+   
     fid = getpid();
     if (i == 0)
     {
@@ -157,7 +158,7 @@ void execute_command(char *argv[maxcommandlength], int i)
         char *path = (char *)malloc(sizeof(char) * (maxpathlength));
         int hidden = 0;
         int all = 0;
-        strcpy(path, b_dir);
+        path = getcwd(path, maxpathlength);
         for (int j = 1; j < i; j++)
         {
             if (argv[j][0] == '-')    

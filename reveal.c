@@ -5,7 +5,7 @@ extern char b_dir[4096];
 #define WHITE "\x1b[37m"
 #define RED "\033[31m"
 #define RESET "\x1b[0m"
-char prepath[MAX_INPUT_LENGTH] = "";
+extern char prev_path[MAX_INPUT_LENGTH];
 int compare_entries(const struct dirent **a, const struct dirent **b)
 {
     return strcmp((*a)->d_name, (*b)->d_name);
@@ -111,49 +111,40 @@ void print_long_format(const char *filename, const struct stat *path_stat)
     printf(" %s\n", filename);
 }
 
-void reveal(char *path, int show_hidden, int long_format)
+void reveal(char *input_path, int show_hidden, int long_format)
 {
     struct dirent **entries;
     struct stat path_stat;
+    char *resolved_path = resolve_path(input_path);
 
-    if (strcmp(path, "-") == 0)
-    {
-        if (strcmp(prepath, "") == 0)
-        {
-            printf(RED "NO previous path\n" RESET);
-            return;
-        }
-        else
-        {
-            strcpy(path, prepath);
-        }
-    }
-    if (path[0] == '~')
-    {
-        strcpy(path, b_dir);
-    }
-    if (stat(path, &path_stat) != 0)
+    if (resolved_path == NULL)
+        return;
+
+    if (stat(resolved_path, &path_stat) != 0)
     {
         perror("stat");
+        free(resolved_path);
         return;
     }
+
     if (S_ISDIR(path_stat.st_mode))
     {
-        int count = scandir(path, &entries, NULL, compare_entries);
+        int count = scandir(resolved_path, &entries, NULL, compare_entries);
         if (count < 0)
         {
             perror("scandir");
+            free(resolved_path);
             return;
         }
+
         long total_blocks = 0;
-        strcpy(prepath, path);
         for (int i = 0; i < count; i++)
         {
             if (!show_hidden && entries[i]->d_name[0] == '.')
                 continue;
 
             char full_path[1024];
-            snprintf(full_path, sizeof(full_path), "%s/%s", path, entries[i]->d_name);
+            snprintf(full_path, sizeof(full_path), "%s/%s", resolved_path, entries[i]->d_name);
 
             struct stat file_stat;
             if (stat(full_path, &file_stat) < 0)
@@ -164,13 +155,15 @@ void reveal(char *path, int show_hidden, int long_format)
 
             total_blocks += file_stat.st_blocks;
         }
+
         if (long_format)
         {
             printf("total %ld\n", total_blocks / 2);
         }
+
         for (int i = 0; i < count; i++)
         {
-            print_file_info(entries[i], path, show_hidden, long_format);
+            print_file_info(entries[i], resolved_path, show_hidden, long_format);
             free(entries[i]);
         }
 
@@ -178,19 +171,20 @@ void reveal(char *path, int show_hidden, int long_format)
     }
     else if (S_ISREG(path_stat.st_mode))
     {
-        if (S_ISREG(path_stat.st_mode))
+        if (long_format)
         {
-            if (long_format)
-            {
-                print_long_format(path, &path_stat);
-            }
-            else
-            {
-                printf("%s\n", path);
-            }
+            print_long_format(resolved_path, &path_stat);
+        }
+        else
+        {
+            printf("%s\n", resolved_path);
         }
     }
+
+    free(resolved_path);
 }
+
+
 char *resolve_path(char *path)
 {
     char new_path[MAX_INPUT_LENGTH];
@@ -199,6 +193,10 @@ char *resolve_path(char *path)
     if (path[0] == '~')
     {
         snprintf(new_path, sizeof(new_path), "%s%s", b_dir, path + 1);
+    }
+    else if(path[0] == '-')
+    {
+        snprintf(new_path, sizeof(new_path), "%s", prev_path);
     }
     else
     {

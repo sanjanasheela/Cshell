@@ -58,8 +58,8 @@ void display(int t)
     char *shown_path = replace_home_with_tilde(cwd, b_dir);
 
     if (t > 2) {
-        printf(COLOR_GREEN "%s@%s: " COLOR_BLUE "%s%s $" COLOR_RESET, username, hostname, shown_path, late);
+        printf(COLOR_GREEN "%s@%s: " COLOR_BLUE "%s%s" COLOR_RESET "$ ", username, hostname, shown_path, late);
     } else {
-        printf(COLOR_GREEN "%s@%s: " COLOR_BLUE "%s $" COLOR_RESET, username, hostname, shown_path);
+        printf(COLOR_GREEN "%s@%s: " COLOR_BLUE "%s" COLOR_RESET"$ " ,username, hostname, shown_path);
     }
 }

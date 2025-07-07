@@ -1,15 +1,15 @@
-exit
-clear
-ls
-nano a.out
-clear
-mqak[2~[2~[3~exit
-exit
-hop hi
-mkdir hi
-hop hi
-touch a.cpp
+reveal ..
+reveal ~ ..
+reveal ~/..
+reveal -
+hop hi 
+reveal -
 reveal 
-reveal hi 
-clear
-exit
+reveal ~/..
+reveal ..
+reveal - 
+reveal hi
+reveal ~/..
+reveal ..
+reveal -l -a ..
+reveal - l ..

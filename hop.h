@@ -9,3 +9,5 @@
 void print_current_directory();
 
 void hop_to_directory(const char *path, char *prev_path, const char *home_directory);
+
+int build_resolved_path(const char *path, char *resolved_path, const char *home_directory, const char *prev_path);
